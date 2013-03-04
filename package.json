@@ -1,0 +1,16 @@
+{
+  "name": "YY",
+  "private": true,
+  "repository": "",
+  "scripts": {
+    "start": "node index"
+  },
+  "author": {
+    "name": "maomao",
+    "email": "maoshuyu@gmail.com"
+  },
+  "dependencies": {
+    "eventproxy": "0.2.1",
+    "jsdom": "*"
+  }
+}
