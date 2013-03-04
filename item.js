@@ -96,12 +96,14 @@ function parse(html, callback) {
 function item(url, callback) {
     var ep = new EventProxy();
     ep.assign('item', function(html) {
+        console.log('开始解析DOM...');
         parse(html, callback); 
     });
     request({
         'url': url,             
         'method': 'get'
     }, function(err, response, body) {
+        console.log('页面请求成功!!!');
         ep.emit('item', body); 
     });
 }

@@ -37,6 +37,8 @@ function parseUpdate(item) {
 }
 
 function mergeItem(source, callback) {
+    console.log('开始获取影片<<' + source.name + '>>');
+    console.log('正在请求页面: ' + source.url);
     item(source.url, function(obj) {
         extend(source, obj);  
         callback(source);
@@ -44,20 +46,34 @@ function mergeItem(source, callback) {
 }
 
 function parse(html, callback) {
+    console.log('正在解析影片列表页DOM...');
     dom(html, function(window) {
         var ep = new EventProxy() 
           , $ = window.$
-          , list = $(selectors['list']);
+          , arr = []
+          , list = $(selectors['list'])
+          , total = list.length
+          , progress = 0;
         
-        if (!list || list.length == 0) {
-            console.log('获取resourcelist失败，可能是由于页面结构改变导致的！！！'); 
+        if (!list || total == 0) {
+            console.log('解析失败，可能是由于页面结构改变导致的！！！'); 
             process.exit();
         }
          
-        ep.after('parse', list.length, callback);
+        ep.after('parse', total, callback);
+
+        console.log('DOM解析成功，本页共有' + total + '部影片!!!');
+        console.log('...............................................');
          
+        //转化为数组
         list.each(function(i, item, list) {  
-            var item = $(item);
+            arr.push(item);
+        });
+
+        (function (item) {
+            if (!item) return;
+            var item = $(item),
+            fun = arguments.callee;
             mergeItem({
                 'tinyImg': item.find(selectors['tinyImg']).attr('src'),
                 'url': item.find(selectors['url']).attr('href'), 
@@ -66,10 +82,15 @@ function parse(html, callback) {
                 'status': parseStatus(item),
                 'update': parseUpdate(item)
             }, function(obj) {
-                console.log(obj);
+                console.log('页面DOM解析成功!!!')
+                console.log('影片<<' + obj.name + '>>获取成功!!!');
+                console.log('当前完成' + String(Math.floor((++progress)/total * 100)) + '%');
+                console.log('...............................................');
                 ep.emit('parse', obj);
-            });
-        });
+                //递归调用自己,从而遍历整个list
+                fun.call(null, arr.shift());
+            });       
+        })(arr.shift())
 
     });  
 }
@@ -79,11 +100,14 @@ function list(page, callback) {
 
     ep.assign('list', function(html) {
         parse(html, callback); 
-    });;
+    });
+    
+    console.log('正在请求第' + page + '页影视列表...');
     request({
         'url': 'http://www.yyets.com/php/resourcelist?page=' + page,          
         'method': 'get',
     }, function(err, response, body) {
+        console.log('请求成功!!!');
         ep.emit('list', body); 
     });
 }

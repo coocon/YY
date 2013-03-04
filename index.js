@@ -7,8 +7,7 @@ var list = require('./list')
 
 function data() {
 
-    console.log('正在获取第' + page + '页。');
-
+    
     list(page, function(list) {
         page++;
         data();
