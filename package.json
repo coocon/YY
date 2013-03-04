@@ -1,7 +1,7 @@
 {
   "name": "YY",
-  "private": true,
-  "repository": "",
+  "version": "1.0.0",
+  "repository": "https://github.com/maoshuyu/YY.git",
   "scripts": {
     "start": "node index"
   },
@@ -11,6 +11,6 @@
   },
   "dependencies": {
     "eventproxy": "0.2.1",
-    "jsdom": "*"
+    "jsdom": "0.5.1"
   }
 }
