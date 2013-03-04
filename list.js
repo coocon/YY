@@ -39,7 +39,8 @@ function parseUpdate(item) {
 function mergeItem(source, callback) {
     console.log('开始获取影片<<' + source.name + '>>');
     console.log('正在请求页面: ' + source.url);
-    item(source.url, function(obj) {
+    item(source.url, function(obj, d) {
+        console.log('页面DOM解析成功,耗时' + (new Date() - d)/1000 + 's')
         extend(source, obj);  
         callback(source);
     });   
@@ -82,7 +83,6 @@ function parse(html, callback) {
                 'status': parseStatus(item),
                 'update': parseUpdate(item)
             }, function(obj) {
-                console.log('页面DOM解析成功!!!')
                 console.log('影片<<' + obj.name + '>>获取成功!!!');
                 console.log('当前完成' + String(Math.floor((++progress)/total * 100)) + '%');
                 console.log('...............................................');

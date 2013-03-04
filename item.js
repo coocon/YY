@@ -52,9 +52,19 @@ function parseMovie(lis, $) {
     return obj;
 } 
 
+function total(list, $) {
+    var count = 0;
+    for (var i=0,len=list.length; i<len; i++) {
+        var lis = $(list[i]).find('li');
+        count += lis.length;
+    } 
+    console.log('共有' + count + '个资源');
+}
+
 function parseMovieList(list, $) {
     var movie = {};
     if (!list || list.length == 0) return movie;
+    total(list, $);
     for (var i=0,len=list.length; i<len; i++) {
         var ul = $(list[i]) 
           , season = ul.attr('season')
@@ -80,7 +90,7 @@ function parseDescription(el) {
     return '';
 }
 
-function parse(html, callback) {
+function parse(html, callback, d) {
     dom(html, function(window) {
         var $ = window.$       
           , content = $(selectors['content']);
@@ -89,7 +99,7 @@ function parse(html, callback) {
             'largeImg': content.find(selectors['largeImg']).attr('src'),    
             'description': parseDescription(content.find(selectors['description'])[0]), 
             'movie': parseMovieList(content.find(selectors['movieList']), $) 
-        });
+        }, d);
     });
 }
 
@@ -97,7 +107,7 @@ function item(url, callback) {
     var ep = new EventProxy();
     ep.assign('item', function(html) {
         console.log('开始解析DOM...');
-        parse(html, callback); 
+        parse(html, callback, new Date()); 
     });
     request({
         'url': url,             
