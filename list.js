@@ -2,7 +2,8 @@ var request = require('request')
   , EventProxy = require('eventproxy')
   , dom = require('./dom')
   , extend = require('./lib').extend
-  , item = require('./item');
+  , item = require('./item')
+  , log = require('./log');
 
 var selectors = {
     'list': '.box_4.res_listview .box_1 .boxPadd li',
@@ -37,17 +38,17 @@ function parseUpdate(item) {
 }
 
 function mergeItem(source, callback) {
-    console.log('开始获取影片<<' + source.name + '>>');
-    console.log('正在请求页面: ' + source.url);
+    log.write('开始获取影片<<' + source.name + '>>');
+    log.write('正在请求页面: ' + source.url);
     item(source.url, function(obj, d) {
-        console.log('页面DOM解析成功,耗时' + (new Date() - d)/1000 + 's')
+        log.write('页面DOM解析成功,耗时' + (new Date() - d)/1000 + 's')
         extend(source, obj);  
         callback(source);
     });   
 }
 
 function parse(html, callback) {
-    console.log('正在解析影片列表页DOM...');
+    log.write('正在解析影片列表页DOM...');
     dom(html, function(window) {
         var ep = new EventProxy() 
           , $ = window.$
@@ -57,14 +58,14 @@ function parse(html, callback) {
           , progress = 0;
         
         if (!list || total == 0) {
-            console.log('解析失败，可能是由于页面结构改变导致的！！！'); 
+            log.write('解析失败，可能是由于页面结构改变导致的！！！'); 
             process.exit();
         }
          
         ep.after('parse', total, callback);
 
-        console.log('DOM解析成功，本页共有' + total + '部影片!!!');
-        console.log('...............................................');
+        log.write('DOM解析成功，本页共有' + total + '部影片!!!');
+        log.write('...............................................');
          
         //转化为数组
         list.each(function(i, item, list) {  
@@ -83,9 +84,9 @@ function parse(html, callback) {
                 'status': parseStatus(item),
                 'update': parseUpdate(item)
             }, function(obj) {
-                console.log('影片<<' + obj.name + '>>获取成功!!!');
-                console.log('当前完成' + String(Math.floor((++progress)/total * 100)) + '%');
-                console.log('...............................................');
+                log.write('影片<<' + obj.name + '>>获取成功!!!');
+                log.write('当前完成' + String(Math.floor((++progress)/total * 100)) + '%');
+                log.write('...............................................');
                 ep.emit('parse', obj);
                 //递归调用自己,从而遍历整个list
                 fun.call(null, arr.shift());
@@ -102,12 +103,12 @@ function list(page, callback) {
         parse(html, callback); 
     });
     
-    console.log('正在请求第' + page + '页影视列表...');
+    log.write('正在请求第' + page + '页影视列表...');
     request({
         'url': 'http://www.yyets.com/php/resourcelist?page=' + page,          
         'method': 'get',
     }, function(err, response, body) {
-        console.log('请求成功!!!');
+        log.write('请求成功!!!');
         ep.emit('list', body); 
     });
 }

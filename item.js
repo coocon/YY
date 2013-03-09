@@ -1,7 +1,8 @@
 var request = require('request')
   , EventProxy = require('eventproxy')
   , extend = require('./lib').extend
-  , dom = require('./dom');
+  , dom = require('./dom')
+  , log = require('./log');
 
 var selectors = {
     'content': '.AreaLL',
@@ -38,7 +39,7 @@ function parseMovie(lis, $) {
           , format = li.attr('format') 
           , movieName = li.find(selectors['movieName']).attr('title') 
           , movieSize = li.find(selectors['movieSize']).html() 
-          , movieLinks = parseLinks(li.find(selectors['movieLinks']));    
+          , movieLinks = parseLinks(li.find(selectors['movieLinks']));   
 
         if (!obj[format]) {
             obj[format] = []; 
@@ -52,26 +53,28 @@ function parseMovie(lis, $) {
     return obj;
 } 
 
-function total(list, $) {
+function total(list) {
     var count = 0;
     for (var i=0,len=list.length; i<len; i++) {
-        var lis = $(list[i]).find('li');
+        var lis = list[i].getElementsByTagName('li');
         count += lis.length;
     } 
-    console.log('共有' + count + '个资源');
+    log.write('共有' + count + '个资源');
 }
 
 function parseMovieList(list, $) {
     var movie = {};
     if (!list || list.length == 0) return movie;
+    list = Array.prototype.splice.call(list, 0);
     total(list, $);
     for (var i=0,len=list.length; i<len; i++) {
-        var ul = $(list[i]) 
-          , season = ul.attr('season')
-          , lis = ul.find('li');
+        var ul = list[i] 
+          , season = ul.getAttribute('season')
+          , lis = ul.getElementsByTagName('li');
         if (!movie[season]) {
             movie[season] = {} 
         }               
+        lis = Array.prototype.splice.call(lis, 0);
         if (!lis || lis.length == 0) {
             break; 
         }
@@ -106,14 +109,14 @@ function parse(html, callback, d) {
 function item(url, callback) {
     var ep = new EventProxy();
     ep.assign('item', function(html) {
-        console.log('开始解析DOM...');
+        log.write('开始解析DOM...');
         parse(html, callback, new Date()); 
     });
     request({
         'url': url,             
         'method': 'get'
     }, function(err, response, body) {
-        console.log('页面请求成功!!!');
+        log.write('页面请求成功!!!');
         ep.emit('item', body); 
     });
 }
