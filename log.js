@@ -4,6 +4,6 @@ var fs = require('fs')
   , log = fs.createWriteStream(path, {'flag': 'a'});
 
 exports.write = function(str) {
-    log.write(str);
+    log.write(str + '\n');
     console.log(str);
 }

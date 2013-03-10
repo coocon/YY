@@ -3,6 +3,7 @@ var request = require('request')
   , dom = require('./dom')
   , extend = require('./lib').extend
   , item = require('./item')
+  , createMoive = require('./import').createMoive
   , log = require('./log');
 
 var selectors = {
@@ -85,11 +86,18 @@ function parse(html, callback) {
                 'update': parseUpdate(item)
             }, function(obj) {
                 log.write('影片<<' + obj.name + '>>获取成功!!!');
-                log.write('当前完成' + String(Math.floor((++progress)/total * 100)) + '%');
-                log.write('...............................................');
-                ep.emit('parse', obj);
-                //递归调用自己,从而遍历整个list
-                fun.call(null, arr.shift());
+                log.write('正在写入数据库!!!');
+                createMoive(obj, function(err, moive) {
+                    if (err) {
+                        log.write('数据库写入失败'); 
+                        log.write(err);
+                    } 
+                    log.write('数据库写入成功，当前完成' + String(Math.floor((++progress)/total * 100)) + '%');
+                    log.write('...............................................');
+                    ep.emit('parse', obj);
+                    //递归调用自己,从而遍历整个list
+                    fun.call(null, arr.shift());
+                });  
             });       
         })(arr.shift())
 
