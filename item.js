@@ -1,16 +1,17 @@
 var request = require('request')
   , EventProxy = require('eventproxy')
   , extend = require('./lib').extend
-  , dom = require('./dom');
+  , dom = require('./dom')
+  , log = require('./log');
 
 var selectors = {
     'content': '.AreaLL',
     'largeImg': '.box_4 .res_infobox .f_l_img img',
-    'description': '.box_4 .res_infobox .f_r_info .r_d_info li:last', 
-    'movieList': '.box_4 .box_1 .resod_list', 
-    'movieName': '.l a', 
-    'movieSize': '.l .b .f5',
-    'movieLinks': '.r a'
+    'introduction': '.box_4 .res_infobox .f_r_info .r_d_info li:last', 
+    'resourceList': '.box_4 .box_1 .resod_list', 
+    'resourceName': '.l a', 
+    'resourceSize': '.l .b .f5',
+    'resourceLinks': '.r a'
 };
 
 function parseLinks(links) {
@@ -31,56 +32,58 @@ function parseLinks(links) {
     return obj;
 }
 
-function parseMovie(lis, $) {
+function parseResource(lis, $) {
     var obj = {};
     for (var i=0,len=lis.length; i<len; i++) {
         var li = $(lis[i]) 
           , format = li.attr('format') 
-          , movieName = li.find(selectors['movieName']).attr('title') 
-          , movieSize = li.find(selectors['movieSize']).html() 
-          , movieLinks = parseLinks(li.find(selectors['movieLinks']));    
+          , resourceName = li.find(selectors['resourceName']).attr('title') 
+          , resourceSize = li.find(selectors['resourceSize']).html() 
+          , resourceLinks = parseLinks(li.find(selectors['resourceLinks']));   
 
         if (!obj[format]) {
             obj[format] = []; 
         } 
         obj[format].push({
-            'movieName': movieName, 
-            'movieSize': movieSize,
-            'movieLinks': movieLinks 
+            'resourceName': resourceName, 
+            'resourceSize': resourceSize,
+            'resourceLinks': resourceLinks 
         });
     }
     return obj;
 } 
 
-function total(list, $) {
+function total(list) {
     var count = 0;
     for (var i=0,len=list.length; i<len; i++) {
-        var lis = $(list[i]).find('li');
+        var lis = list[i].getElementsByTagName('li');
         count += lis.length;
     } 
-    console.log('共有' + count + '个资源');
+    log.write('共有' + count + '个资源');
 }
 
-function parseMovieList(list, $) {
-    var movie = {};
-    if (!list || list.length == 0) return movie;
+function parseResourceList(list, $) {
+    var resource = {};
+    if (!list || list.length == 0) return resource;
+    list = Array.prototype.splice.call(list, 0);
     total(list, $);
     for (var i=0,len=list.length; i<len; i++) {
-        var ul = $(list[i]) 
-          , season = ul.attr('season')
-          , lis = ul.find('li');
-        if (!movie[season]) {
-            movie[season] = {} 
+        var ul = list[i] 
+          , season = ul.getAttribute('season')
+          , lis = ul.getElementsByTagName('li');
+        if (!resource[season]) {
+            resource[season] = {} 
         }               
+        lis = Array.prototype.splice.call(lis, 0);
         if (!lis || lis.length == 0) {
             break; 
         }
-        extend(movie[season], parseMovie(lis, $));
+        extend(resource[season], parseResource(lis, $));
     }
-    return movie;
+    return resource;
 }
 
-function parseDescription(el) {
+function parseIntroduction(el) {
     var childs = el.childNodes;
     for (var i=childs.length-1; i>=0; i--) {
         if (childs[i].nodeType == 1 && childs[i].style.display == 'none') {
@@ -97,8 +100,8 @@ function parse(html, callback, d) {
           
         callback({
             'largeImg': content.find(selectors['largeImg']).attr('src'),    
-            'description': parseDescription(content.find(selectors['description'])[0]), 
-            'movie': parseMovieList(content.find(selectors['movieList']), $) 
+            'introduction': parseIntroduction(content.find(selectors['introduction'])[0]), 
+            'resources': JSON.stringify(parseResourceList(content.find(selectors['resourceList']), $)) 
         }, d);
     });
 }
@@ -106,14 +109,14 @@ function parse(html, callback, d) {
 function item(url, callback) {
     var ep = new EventProxy();
     ep.assign('item', function(html) {
-        console.log('开始解析DOM...');
+        log.write('开始解析DOM...');
         parse(html, callback, new Date()); 
     });
     request({
         'url': url,             
         'method': 'get'
     }, function(err, response, body) {
-        console.log('页面请求成功!!!');
+        log.write('页面请求成功!!!');
         ep.emit('item', body); 
     });
 }
